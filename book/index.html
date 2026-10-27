@@ -70,7 +70,7 @@ a{color:var(--pen)}
 .spine small{font:500 12px var(--f-mono);opacity:.85}
 
 /* ——— книга ——— */
-.desk{max-width:1240px;margin:0 auto}
+.desk{max-width:1240px;margin:0 auto;overflow-x:clip}
 .book{
   position:relative;background:var(--cloth);border-radius:6px;padding:10px;
   box-shadow:0 30px 60px -20px var(--shadow), 0 8px 18px -8px var(--shadow);
@@ -241,6 +241,8 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
   h2{font-size:28px}
   .book{padding:6px}
   .stampslot{width:84px;height:84px;top:-30px}
+  .rank{margin-left:0;width:100%}
+  .rk-bar{flex:1 1 80px}
   .leaf{display:none!important}
 }
 @media (prefers-reduced-motion: reduce){
@@ -248,6 +250,42 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
   .stamp.new{animation:none}
   *{transition:none!important}
 }
+/* ——— ранг и опыт ——— */
+.rank{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin-left:auto}
+.rank b{font:700 16px var(--f-display);color:var(--ink)}
+.rk-l{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.rk-bar{display:inline-block;width:120px;height:8px;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--paper)}
+.rk-bar i{display:block;height:100%;background:repeating-linear-gradient(-45deg,var(--stamp) 0 4px,color-mix(in srgb,var(--stamp) 70%,var(--paper)) 4px 8px);transition:width .6s}
+.rk-xp{font:500 12px var(--f-mono)}
+.toasts{position:fixed;z-index:40;right:max(16px, env(safe-area-inset-right, 0px));top:calc(14px + env(safe-area-inset-top, 0px));display:grid;gap:8px;justify-items:end;pointer-events:none}
+.toast{background:var(--paper);border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:8px 14px;font-size:14px;animation:tin .35s cubic-bezier(.2,1.4,.4,1)}
+.toast b{color:var(--good);font-family:var(--f-mono)}
+.toast.rankup{border-color:var(--stamp);box-shadow:3px 3px 0 var(--stamp);padding:12px 18px;display:grid;gap:2px}
+.toast.rankup b{color:var(--stamp);font:800 22px var(--f-display)}
+.toast .tk{font:700 18px var(--f-hand);color:var(--ink-soft)}
+.toast.out{opacity:0;transform:translateY(-8px);transition:.4s}
+@keyframes tin{from{transform:translateX(30px);opacity:0}}
+
+/* ——— история в начале главы ——— */
+.hook{position:relative;margin:6px 0 24px;padding:20px 20px 12px;background:var(--paper-2);border:1px solid var(--edge);transform:rotate(-.5deg);box-shadow:0 12px 20px -14px var(--shadow)}
+.hook::before{content:"";position:absolute;top:-11px;left:50%;width:96px;height:22px;transform:translateX(-50%) rotate(2deg);background:color-mix(in srgb,var(--glow) 38%,transparent)}
+.hk-eye{font:600 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--stamp)}
+.hook h3{margin:4px 0 8px;font-size:23px;line-height:1.15}
+.hook p{margin:0 0 9px;max-width:62ch}
+.hook .big{font:800 30px/1.1 var(--f-display);color:var(--pen);margin:6px 0 10px}
+.swatch{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.15em;border:1px solid var(--ink);margin-right:.3em}
+
+/* ——— живые обложки ——— */
+.cover-art{margin:6px 0 14px}
+.cover-art .cap{margin-top:4px}
+.crt{
+  margin:0;background:#0a0f0b;color:#a8f0a0;font:13px/1.45 var(--f-mono);padding:16px 18px;border-radius:12px;
+  border:10px solid #23262a;box-shadow:inset 0 0 40px rgba(0,0,0,.8), 0 14px 26px -14px var(--shadow);
+  text-shadow:0 0 6px rgba(120,255,120,.45);white-space:pre;overflow-x:auto;position:relative;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)
+}
+.crt .cur{display:inline-block;width:.6em;background:#a8f0a0;animation:blink 1s steps(1) infinite}
+
 .more{margin-top:18px;padding:14px 16px;background:var(--paper);border:1.5px solid var(--ink-soft);border-radius:3px;display:grid;gap:16px}
 .more .lbl{margin:0}
 .mq p{margin:0 0 8px}
@@ -262,11 +300,9 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
 </style>
 
 <header class="top">
-  <div class="brand">Бит <i>и</i> Случай</div>
-  <div class="spines" role="group" aria-label="Выбор книги">
-    <button class="spine" id="sp-tv" data-k="tv" aria-pressed="true">СЛУЧАЙ <small id="cnt-tv"></small></button>
-    <button class="spine" id="sp-vms" data-k="vms" aria-pressed="false">БИТ <small id="cnt-vms"></small></button>
-  </div>
+  <div class="brand" id="brand">Бит <i>и</i> Случай</div>
+  <div class="rank" id="rank" aria-live="polite"></div>
+  <div class="spines" id="spines" role="group" aria-label="Выбор книги"></div>
 </header>
 
 <main class="desk">
@@ -288,14 +324,15 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
   <button id="bTheme" aria-label="Сменить тему"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" style="fill:var(--ink)"/></svg></button>
 </nav>
 
+<div class="toasts" id="toasts" aria-live="polite"></div>
 <div class="drawer" id="toc" hidden><div class="panel" id="tocPanel"></div></div>
 <div class="quiz" id="quiz" hidden><div class="card" id="quizCard" role="dialog" aria-modal="true" aria-label="Тренажёр"></div></div>
 
 <script>
 /* ——— общие инструменты для глав ——— */
 window.BOOKS = {
-  tv:{key:'tv',name:'Случай',sub:'Теория вероятностей и математическая статистика',src:'По «Руководству к решению задач по теории вероятностей и математической статистике» В. Е. Гмурмана',moreTitle:'Ещё задачи из Гмурмана',lessons:[]},
-  vms:{key:'vms',name:'Бит',sub:'Вычислительные машины и системы',src:'По практической работе №1, лабораторным 1–4 и книге А. Зубкова «Assembler для DOS, Windows и Unix»',moreTitle:'Ещё задачи: практическая №1 и лабы',lessons:[]}
+  tv:{key:'tv',name:'Случай',sub:'Теория вероятностей и математическая статистика',src:'По «Руководству к решению задач по теории вероятностей и математической статистике» В. Е. Гмурмана',moreTitle:'Ещё задачи из Гмурмана',ranks:['Новичок за игральным столом','Ученик Паскаля','Знаток Бернулли','Наследник Гаусса','Магистр Лапласа'],lessons:[]},
+  vms:{key:'vms',name:'Бит',sub:'Вычислительные машины и системы',src:'По практической работе №1, лабораторным 1–4 и книге А. Зубкова «Assembler для DOS, Windows и Unix»',moreTitle:'Ещё задачи: практическая №1 и лабы',ranks:['Пользователь DOS','Повелитель Norton Commander','Мастер отладчика TD','Ассемблерщик','Хакер реального режима'],lessons:[]}
 };
 const U = window.U = {
   h(tag, props, ...kids){
@@ -384,9 +421,12 @@ const KEY = 'bit-i-sluchai-v1';
 let S = {book:'tv', i:0, done:{}, pred:{}, solved:{}, exam:'2026-12-25'};
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY)||'{}')); } catch(e){}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} };
+// в сборке может быть одна книга или обе
+const KEYS = Object.keys(BOOKS).filter(k => BOOKS[k].lessons.length);
 const m = /^#(tv|vms)-(\d+)$/.exec(location.hash);
-if (m){ S.book = m[1]; S.i = Math.min(+m[2], BOOKS[m[1]].lessons.length); }
-if (!BOOKS[S.book]) S.book='tv';
+if (m && KEYS.includes(m[1])){ S.book = m[1]; S.i = +m[2]; }
+if (!KEYS.includes(S.book)){ S.book = KEYS[0]; S.i = 0; }
+S.i = Math.min(S.i, BOOKS[S.book].lessons.length);
 
 const pL = document.getElementById('pL'), pR = document.getElementById('pR'), leaf = document.getElementById('leaf');
 let draw = null, ro = null;
@@ -401,24 +441,56 @@ const stampSVG = (n, fresh) => {
     <text x="50" y="60" text-anchor="middle" font-family="Alegreya, serif" font-weight="800" font-size="30" fill="currentColor">${n}</text></svg>`;
 };
 const doneCount = k => BOOKS[k].lessons.filter(L => S.done[L.id]).length;
-const updCounts = () => { for (const k of ['tv','vms']) document.getElementById('cnt-'+k).textContent = `${doneCount(k)}/${BOOKS[k].lessons.length}`; };
+const updCounts = () => { for (const k of KEYS){ const e = document.getElementById('cnt-'+k); if (e) e.textContent = `${doneCount(k)}/${BOOKS[k].lessons.length}`; } updRank(); };
+
+/* опыт и ранги: всё считается из сохранённого прогресса */
+const XP_STAMP = 30, XP_TASK = 10, XP_PRED = 5;
+const xpOf = k => BOOKS[k].lessons.reduce((s,L)=> s + (S.done[L.id]?XP_STAMP:0) + (S.pred[L.id]===L.predict.a?XP_PRED:0) + solvedCount(L)*XP_TASK, 0);
+const xpMax = k => BOOKS[k].lessons.reduce((s,L)=> s + XP_STAMP + XP_PRED + (L.more||[]).length*XP_TASK, 0);
+const STEPS = [0, .12, .3, .55, .8];
+const rankOf = k => { const x = xpOf(k), mx = xpMax(k); let i = 0; STEPS.forEach((t,j)=>{ if (x >= t*mx) i = j; });
+  return {i, name:BOOKS[k].ranks[i], next:BOOKS[k].ranks[i+1], need: i<4 ? Math.ceil(STEPS[i+1]*mx) - x : 0, x, mx}; };
+function updRank(){
+  const r = rankOf(S.book);
+  document.getElementById('rank').innerHTML = `<span class="rk-l">Ранг</span> <b>${r.name}</b>
+    <span class="rk-bar" role="img" aria-label="${r.x} из ${r.mx} очков опыта"><i style="width:${Math.round(r.x/r.mx*100)}%"></i></span>
+    <span class="rk-xp">${r.x} XP${r.next ? ` · до «${r.next}» ${r.need}` : ''}</span>`;
+}
+const toasts = document.getElementById('toasts');
+function toast(html, kind){
+  const t = h('div',{class:'toast '+(kind||''), html}); toasts.append(t);
+  setTimeout(()=>t.classList.add('out'), kind==='rankup' ? 4200 : 2600); setTimeout(()=>t.remove(), kind==='rankup' ? 4700 : 3100);
+}
+// оборачивает изменение прогресса: показывает полученный опыт и новый ранг
+function gain(why, mutate){
+  const k = S.book, x0 = xpOf(k), r0 = rankOf(k).i;
+  mutate(); save();
+  const d = xpOf(k) - x0, r = rankOf(k);
+  if (d > 0) toast(`<b>+${d} XP</b> ${why}`);
+  if (r.i > r0) toast(`<span class="tk">Новый ранг</span><b>${r.name}</b>`, 'rankup');
+  updCounts();
+}
 
 function renderCover(B){
   draw = null;
   const steps = ['Прочитай теорию и формулу на левой странице.','Предскажи ответ — отметь вариант, пока не проверил.','Проверь на рисунке в тетради: двигай ползунки, бросай кости, щёлкай биты.','Подними клапан — там разбор и решение из учебника.','Реши задачу на штамп. Верный ответ — фиолетовая печать «зачтено».'];
+  const art = h('div',{class:'cover-art'});
   pL.replaceChildren(
-    h('div',{class:'runhead'}, h('span',{},'Книга '+(B.key==='tv'?'первая':'вторая')), h('span',{},'подготовка к сессии')),
+    h('div',{class:'runhead'}, h('span',{}, KEYS.length>1 ? 'Книга '+(B.key==='tv'?'первая':'вторая') : 'Интерактивный учебник'), h('span',{},'подготовка к сессии')),
     h('div',{class:'cover'},
       h('h1',{}, B.name),
       h('p',{class:'sub'}, B.sub),
+      B.cover ? art : null,
       h('p',{class:'theory'}, B.src+'.'),
       h('h3',{},'Как работать с книгой'),
-      h('ol',{class:'steps'}, steps.map(s=>h('li',{},s)))
+      h('ol',{class:'steps'}, steps.map(s=>h('li',{},s))),
+      h('p',{class:'theory'}, `За штамп главы — ${XP_STAMP} XP, за каждую дополнительную задачу — ${XP_TASK}, за верное предсказание — ${XP_PRED}. Опыт поднимает ранг: «${B.ranks.join('» → «')}».`)
     ),
     h('div',{class:'folio'},'i')
   );
+  if (B.cover) draw = B.cover(art) || null;
   const days = Math.ceil((new Date(S.exam+'T09:00') - new Date())/864e5);
-  const left = BOOKS.tv.lessons.length + BOOKS.vms.lessons.length - doneCount('tv') - doneCount('vms');
+  const left = KEYS.reduce((s,k)=> s + BOOKS[k].lessons.length - doneCount(k), 0);
   const weeks = Math.max(1, days/7);
   const dateIn = h('input',{type:'date',class:'txt',id:'examDate',value:S.exam});
   dateIn.addEventListener('change', () => { if (dateIn.value){ S.exam = dateIn.value; save(); renderCover(B); } });
@@ -429,7 +501,7 @@ function renderCover(B){
     h('div',{class:'exam'},
       h('div',{class:'lbl'},'До экзамена'),
       h('div',{class:'big'}, days>0 ? `${days} ${plural(days,'день','дня','дней')}` : 'сегодня или уже прошёл'),
-      h('div',{}, days>0 ? `Осталось глав без штампа: ${left} в обеих книгах. Это примерно ${Math.ceil(left/weeks)} ${plural(Math.ceil(left/weeks),'глава','главы','глав')} в неделю, если оставить последнюю неделю на тренажёр.` : ''),
+      h('div',{}, days>0 ? `Осталось глав без штампа: ${left}${KEYS.length>1?' в обеих книгах':''}. Это примерно ${Math.ceil(left/weeks)} ${plural(Math.ceil(left/weeks),'глава','главы','глав')} в неделю, если оставить последнюю неделю на тренажёр.` : ''),
       h('label',{for:'examDate'},'Дата экзамена:', dateIn),
       h('div',{class:'row'}, U.btn('Начать с главы 1', ()=>go(B.key,1,1),'pri'), U.btn('Тренажёр: 10 вопросов', openQuiz))
     ),
@@ -452,7 +524,7 @@ function renderLesson(B, i){
   };
   L.predict.opts.forEach((o,j)=>{
     const r = h('input',{type:'radio',name:'pr-'+L.id,id:`pr-${L.id}-${j}`,checked:pred===j});
-    r.addEventListener('change', ()=>{ S.pred[L.id]=j; save(); mark(); openFlap(true); });
+    r.addEventListener('change', ()=>{ gain('за верное предсказание', ()=>{ S.pred[L.id]=j; }); mark(); openFlap(true); });
     opts.append(h('label',{class:'opt',for:`pr-${L.id}-${j}`}, r, h('span',{html:o})));
   });
   const openFlap = (force) => {
@@ -472,6 +544,7 @@ function renderLesson(B, i){
   pL.replaceChildren(
     h('div',{class:'runhead'}, h('span',{}, `${B.name} · глава ${i}`), h('span',{}, L.src)),
     h('h2',{}, h('span',{class:'no'}, i+'.'), L.title),
+    L.hook ? h('aside',{class:'hook'}, h('div',{class:'hk-eye'}, L.hook.eye), h('h3',{}, L.hook.title), h('div',{html:L.hook.html})) : null,
     h('div',{class:'theory',html:L.theory}),
     h('div',{class:'predict'}, h('div',{class:'lbl'},'Предскажи'), h('p',{html:L.predict.q}), opts),
     flapBtn, flapBody,
@@ -491,7 +564,7 @@ function renderLesson(B, i){
     if (!input.value.trim()){ fb.className='fb no'; fb.textContent='Впиши ответ в поле.'; return; }
     if (L.ch.check(input.value)){
       fb.className='fb ok'; fb.textContent = 'Верно! Ответ: '+L.ch.ans+'.';
-      if (!S.done[L.id]){ S.done[L.id]=true; save(); slot.innerHTML = stampSVG(i,true); updCounts(); }
+      if (!S.done[L.id]){ gain('и штамп главы '+i, ()=>{ S.done[L.id]=true; }); slot.innerHTML = stampSVG(i,true); }
     } else { fb.className='fb no'; fb.textContent = L.ch.wrong || 'Пока не сходится. Проверь вычисления или открой подсказку.'; }
   });
   pR.replaceChildren(
@@ -520,7 +593,7 @@ function renderMore(L){
     f.addEventListener('submit', e => {
       e.preventDefault();
       if (!inp.value.trim()){ fb.className='fb no'; fb.textContent='Впиши ответ в поле.'; return; }
-      if (P.check(inp.value)){ fb.className='fb ok'; fb.innerHTML='Верно! Ответ: '+P.ans+'.'; S.solved[key]=true; save(); num.classList.add('done'); }
+      if (P.check(inp.value)){ fb.className='fb ok'; fb.innerHTML='Верно! Ответ: '+P.ans+'.'; gain('за задачу № '+P.n, ()=>{ S.solved[key]=true; }); num.classList.add('done'); }
       else { fb.className='fb no'; fb.textContent='Пока не сходится. Проверь вычисления или открой подсказку.'; }
     });
     return h('div',{class:'mq'}, h('p',{}, num, ' ', h('span',{html:P.q})), f, fb,
@@ -531,7 +604,7 @@ function renderMore(L){
 function render(){
   const B = BOOKS[S.book];
   document.getElementById('book').dataset.book = S.book;
-  for (const k of ['tv','vms']) document.getElementById('sp-'+k).setAttribute('aria-pressed', k===S.book);
+  for (const k of KEYS){ const e = document.getElementById('sp-'+k); if (e) e.setAttribute('aria-pressed', k===S.book); }
   if (S.i===0) renderCover(B); else renderLesson(B, S.i);
   const L = B.lessons[S.i-1];
   document.getElementById('bTitle').innerHTML = S.i ? `<small>${S.i}</small>${L.title}` : `<small>${B.name}</small>Обложка и оглавление`;
@@ -560,7 +633,7 @@ function go(book, i, dir){
 const toc = document.getElementById('toc'), tocPanel = document.getElementById('tocPanel');
 function openToc(){
   tocPanel.replaceChildren(U.btn('Закрыть', closeToc, 'close'), h('h3',{style:'margin-top:0'},'Оглавление'),
-    ...['tv','vms'].map(k => h('div',{},
+    ...KEYS.map(k => h('div',{},
       h('h3',{}, BOOKS[k].name+' — '+BOOKS[k].sub),
       h('ul',{class:'toclist'},
         h('li',{}, h('button',{type:'button',onclick:()=>go(k,0,-1)}, h('span',{class:'n'},'·'), h('span',{},'Обложка, план, тренажёр'), h('span',{}))),
@@ -574,7 +647,7 @@ toc.addEventListener('click', e => { if (e.target===toc) closeToc(); });
 const quiz = document.getElementById('quiz'), card = document.getElementById('quizCard');
 let Q = null;
 function openQuiz(){
-  const all = ['tv','vms'].flatMap(k => BOOKS[k].lessons.map((L,i)=>({k,i:i+1,L})));
+  const all = KEYS.flatMap(k => BOOKS[k].lessons.map((L,i)=>({k,i:i+1,L})));
   for (let i=all.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
   Q = {items:all.slice(0,10), n:0, score:0};
   quiz.hidden = false; showQ();
@@ -628,9 +701,11 @@ document.getElementById('bMenu').onclick = openToc;
 document.getElementById('bQuiz').onclick = openQuiz;
 document.getElementById('bPrev').onclick = () => go(S.book, S.i-1, -1);
 document.getElementById('bNext').onclick = () => go(S.book, S.i+1, 1);
-document.querySelectorAll('.spine').forEach(b => b.onclick = () => go(b.dataset.k, 0, b.dataset.k==='vms'?1:-1));
+if (KEYS.length > 1) document.getElementById('spines').append(...KEYS.map(k =>
+  h('button',{class:'spine',id:'sp-'+k,type:'button','aria-pressed':'false',onclick:()=>go(k,0,k==='vms'?1:-1)}, BOOKS[k].name.toUpperCase()+' ', h('small',{id:'cnt-'+k}))));
+else { const B = BOOKS[KEYS[0]]; document.getElementById('brand').innerHTML = `${B.name} <i>· ${B.sub.toLowerCase()}</i>`; }
 
-addEventListener('hashchange', () => { const m = /^#(tv|vms)-(\d+)$/.exec(location.hash); if (m) go(m[1], Math.min(+m[2], BOOKS[m[1]].lessons.length), 1); });
+addEventListener('hashchange', () => { const m = /^#(tv|vms)-(\d+)$/.exec(location.hash); if (m && KEYS.includes(m[1])) go(m[1], Math.min(+m[2], BOOKS[m[1]].lessons.length), 1); });
 let raf = 0;
 new ResizeObserver(()=>{ cancelAnimationFrame(raf); raf = requestAnimationFrame(()=>draw && draw()); }).observe(pR);
 document.fonts && document.fonts.ready.then(()=>draw && draw());

@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>body{margin:0}</style>
 <title>Бит и Случай</title>
+<meta name="description" content="Интерактивная книга к сессии: теория вероятностей и вычислительные машины и системы.">
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* cyrillic */
@@ -273,7 +274,7 @@ a{color:var(--pen)}
 .spine small{font:500 12px var(--f-mono);opacity:.85}
 
 /* ——— книга ——— */
-.desk{max-width:1240px;margin:0 auto}
+.desk{max-width:1240px;margin:0 auto;overflow-x:clip}
 .book{
   position:relative;background:var(--cloth);border-radius:6px;padding:10px;
   box-shadow:0 30px 60px -20px var(--shadow), 0 8px 18px -8px var(--shadow);
@@ -444,6 +445,8 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
   h2{font-size:28px}
   .book{padding:6px}
   .stampslot{width:84px;height:84px;top:-30px}
+  .rank{margin-left:0;width:100%}
+  .rk-bar{flex:1 1 80px}
   .leaf{display:none!important}
 }
 @media (prefers-reduced-motion: reduce){
@@ -451,6 +454,42 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
   .stamp.new{animation:none}
   *{transition:none!important}
 }
+/* ——— ранг и опыт ——— */
+.rank{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--ink-soft);margin-left:auto}
+.rank b{font:700 16px var(--f-display);color:var(--ink)}
+.rk-l{font:600 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase}
+.rk-bar{display:inline-block;width:120px;height:8px;border:1.5px solid var(--ink);border-radius:999px;overflow:hidden;background:var(--paper)}
+.rk-bar i{display:block;height:100%;background:repeating-linear-gradient(-45deg,var(--stamp) 0 4px,color-mix(in srgb,var(--stamp) 70%,var(--paper)) 4px 8px);transition:width .6s}
+.rk-xp{font:500 12px var(--f-mono)}
+.toasts{position:fixed;z-index:40;right:max(16px, env(safe-area-inset-right, 0px));top:calc(14px + env(safe-area-inset-top, 0px));display:grid;gap:8px;justify-items:end;pointer-events:none}
+.toast{background:var(--paper);border:1.5px solid var(--ink);box-shadow:3px 3px 0 var(--ink);padding:8px 14px;font-size:14px;animation:tin .35s cubic-bezier(.2,1.4,.4,1)}
+.toast b{color:var(--good);font-family:var(--f-mono)}
+.toast.rankup{border-color:var(--stamp);box-shadow:3px 3px 0 var(--stamp);padding:12px 18px;display:grid;gap:2px}
+.toast.rankup b{color:var(--stamp);font:800 22px var(--f-display)}
+.toast .tk{font:700 18px var(--f-hand);color:var(--ink-soft)}
+.toast.out{opacity:0;transform:translateY(-8px);transition:.4s}
+@keyframes tin{from{transform:translateX(30px);opacity:0}}
+
+/* ——— история в начале главы ——— */
+.hook{position:relative;margin:6px 0 24px;padding:20px 20px 12px;background:var(--paper-2);border:1px solid var(--edge);transform:rotate(-.5deg);box-shadow:0 12px 20px -14px var(--shadow)}
+.hook::before{content:"";position:absolute;top:-11px;left:50%;width:96px;height:22px;transform:translateX(-50%) rotate(2deg);background:color-mix(in srgb,var(--glow) 38%,transparent)}
+.hk-eye{font:600 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--stamp)}
+.hook h3{margin:4px 0 8px;font-size:23px;line-height:1.15}
+.hook p{margin:0 0 9px;max-width:62ch}
+.hook .big{font:800 30px/1.1 var(--f-display);color:var(--pen);margin:6px 0 10px}
+.swatch{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.15em;border:1px solid var(--ink);margin-right:.3em}
+
+/* ——— живые обложки ——— */
+.cover-art{margin:6px 0 14px}
+.cover-art .cap{margin-top:4px}
+.crt{
+  margin:0;background:#0a0f0b;color:#a8f0a0;font:13px/1.45 var(--f-mono);padding:16px 18px;border-radius:12px;
+  border:10px solid #23262a;box-shadow:inset 0 0 40px rgba(0,0,0,.8), 0 14px 26px -14px var(--shadow);
+  text-shadow:0 0 6px rgba(120,255,120,.45);white-space:pre;overflow-x:auto;position:relative;
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)
+}
+.crt .cur{display:inline-block;width:.6em;background:#a8f0a0;animation:blink 1s steps(1) infinite}
+
 .more{margin-top:18px;padding:14px 16px;background:var(--paper);border:1.5px solid var(--ink-soft);border-radius:3px;display:grid;gap:16px}
 .more .lbl{margin:0}
 .mq p{margin:0 0 8px}
@@ -467,11 +506,9 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
 </head>
 <body>
 <header class="top">
-  <div class="brand">Бит <i>и</i> Случай</div>
-  <div class="spines" role="group" aria-label="Выбор книги">
-    <button class="spine" id="sp-tv" data-k="tv" aria-pressed="true">СЛУЧАЙ <small id="cnt-tv"></small></button>
-    <button class="spine" id="sp-vms" data-k="vms" aria-pressed="false">БИТ <small id="cnt-vms"></small></button>
-  </div>
+  <div class="brand" id="brand">Бит <i>и</i> Случай</div>
+  <div class="rank" id="rank" aria-live="polite"></div>
+  <div class="spines" id="spines" role="group" aria-label="Выбор книги"></div>
 </header>
 
 <main class="desk">
@@ -493,14 +530,15 @@ details.hint summary{cursor:pointer;font:600 18px var(--f-hand);color:var(--ink-
   <button id="bTheme" aria-label="Сменить тему"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 0 0 16z" fill="currentColor" style="fill:var(--ink)"/></svg></button>
 </nav>
 
+<div class="toasts" id="toasts" aria-live="polite"></div>
 <div class="drawer" id="toc" hidden><div class="panel" id="tocPanel"></div></div>
 <div class="quiz" id="quiz" hidden><div class="card" id="quizCard" role="dialog" aria-modal="true" aria-label="Тренажёр"></div></div>
 
 <script>
 /* ——— общие инструменты для глав ——— */
 window.BOOKS = {
-  tv:{key:'tv',name:'Случай',sub:'Теория вероятностей и математическая статистика',src:'По «Руководству к решению задач по теории вероятностей и математической статистике» В. Е. Гмурмана',moreTitle:'Ещё задачи из Гмурмана',lessons:[]},
-  vms:{key:'vms',name:'Бит',sub:'Вычислительные машины и системы',src:'По практической работе №1, лабораторным 1–4 и книге А. Зубкова «Assembler для DOS, Windows и Unix»',moreTitle:'Ещё задачи: практическая №1 и лабы',lessons:[]}
+  tv:{key:'tv',name:'Случай',sub:'Теория вероятностей и математическая статистика',src:'По «Руководству к решению задач по теории вероятностей и математической статистике» В. Е. Гмурмана',moreTitle:'Ещё задачи из Гмурмана',ranks:['Новичок за игральным столом','Ученик Паскаля','Знаток Бернулли','Наследник Гаусса','Магистр Лапласа'],lessons:[]},
+  vms:{key:'vms',name:'Бит',sub:'Вычислительные машины и системы',src:'По практической работе №1, лабораторным 1–4 и книге А. Зубкова «Assembler для DOS, Windows и Unix»',moreTitle:'Ещё задачи: практическая №1 и лабы',ranks:['Пользователь DOS','Повелитель Norton Commander','Мастер отладчика TD','Ассемблерщик','Хакер реального режима'],lessons:[]}
 };
 const U = window.U = {
   h(tag, props, ...kids){
@@ -1206,6 +1244,104 @@ const MORE = {
     P(591,'Вероятность полного выздоровления при лекарстве A равна 0,8. Новое лекарство B назначено 800 больным, 660 из них выздоровели. Найдите U<sub>набл</sub> для H₀: p = 0,8 при H₁: p ≠ 0,8. (u<sub>кр</sub> = 1,96 при α = 0,05)',1.77,.01,'U<sub>набл</sub> ≈ 1,77 &lt; 1,96 — считать B значимо эффективнее нельзя','U = (m/n − p₀)·√n / √(p₀q₀), m/n = 0,825.')]
 };
 for (const L of BOOKS.tv.lessons) L.more = MORE[L.id];
+
+/* Истории, с которых начинается каждая глава */
+const HOOK = {
+  tv1:{eye:'Задача Галилея, около 1620 года', title:'Почему на трёх костях 10 выпадает чаще, чем 9?',
+    html:`<p>Флорентийские игроки заметили странность. Сумма 9 и сумма 10 раскладываются одинаковым числом способов, по шесть: 9 = 1+2+6 = 1+3+5 = 1+4+4 = 2+2+5 = 2+3+4 = 3+3+3. И всё же 10 выпадает чаще.</p>
+    <p>Галилей объяснил: считать нужно не способы, а <b>равновозможные исходы</b>, то есть упорядоченные тройки. «1+4+4» получается тремя исходами, а «3+3+3» — только одним.</p>
+    <p class="big">27 против 25 из 216</p><p>Разница около одного процента, а игроки разглядели её на опыте. Вся эта глава — о том, как не спутать способы с исходами.</p>`},
+  tv2:{eye:'Граф Бюффон, 1777', title:'Как вычислить π, бросая иглы на пол',
+    html:`<p>Пол сложен из досок шириной d. На него наудачу бросают иглу длиной l ≤ d. Бюффон доказал, что игла пересечёт щель с вероятностью</p>
+    <p class="big">P = 2l / (πd)</p><p>Значит, π можно найти, просто бросая иглы и считая пересечения. Это первая задача на геометрическую вероятность и первый метод Монте-Карло, на полтора века раньше компьютеров. На рисунке справа ты сделаешь то же самое с точками.</p>`},
+  tv3:{eye:'Шевалье де Мере, 1654', title:'Спор, с которого началась теория вероятностей',
+    html:`<p>Де Мере стабильно выигрывал, ставя на то, что за 4 броска кости хотя бы раз выпадет шестёрка. Потом он рассудил: две шестёрки на паре костей в 6 раз реже, значит, хватит 24 бросков пары. И начал проигрывать.</p>
+    <p class="big">1 − (5/6)⁴ ≈ 0,518 &nbsp;·&nbsp; 1 − (35/36)²⁴ ≈ 0,491</p>
+    <p>Он пожаловался Паскалю, Паскаль написал Ферма, и из их переписки выросла теория вероятностей. Формула «хотя бы одно» из этой главы объясняет весь спор за одну строчку.</p>`},
+  tv4:{eye:'Парадокс ложной тревоги', title:'Тест точен на 99%. Почему ты, скорее всего, здоров?',
+    html:`<p>Болезнь встречается у 1 человека из 1000. Тест находит её у 99% больных, но и у 1% здоровых даёт ложный «плюс». Твой тест положительный. Насколько вероятно, что ты болен?</p>
+    <p>Интуиция говорит «99%». Формула Бейеса говорит:</p>
+    <p class="big">≈ 9%</p>
+    <p>На 1000 человек приходится один больной с «плюсом» и около десяти здоровых с ложным «плюсом». Даже врачи в опросах часто отвечают неверно. После этой главы ты не ошибёшься.</p>`},
+  tv5:{eye:'Сэмюэл Пепис и Исаак Ньютон, 1693', title:'Вопрос, который задали Ньютону',
+    html:`<p>Что вероятнее: хотя бы одна шестёрка на 6 костях, хотя бы две на 12 или хотя бы три на 18? Интуиция подсказывает «одинаково»: шестёрок в среднем везде ровно столько, сколько нужно.</p>
+    <p>Ньютон посчитал и ответил: вероятнее всего первый вариант.</p>
+    <p class="big">0,665 · 0,619 · 0,597</p>
+    <p>Все три числа — это формула Бернулли из этой главы. Попробуй потом проверить их на рисунке.</p>`},
+  tv6:{eye:'Владислав Борткевич, 1898', title:'Лошади, копыта и закон Пуассона',
+    html:`<p>Борткевич собрал данные по 10 корпусам прусской кавалерии за 20 лет: сколько солдат в год погибло от удара лошадиным копытом. Всего 122 случая на 200 «корпусо-лет», то есть λ = 0,61.</p>
+    <p>Закон Пуассона предсказал, что лет без единой такой гибели будет около 109.</p>
+    <p class="big">Предсказано 108,7 — было 109</p>
+    <p>Редкие независимые события подчиняются Пуассону с пугающей точностью: аварии, опечатки, звонки в колл-центр, распад атомов.</p>`},
+  tv7:{eye:'Европейская рулетка', title:'Почему казино никогда не проигрывает',
+    html:`<p>На колесе 37 ячеек: 18 красных, 18 чёрных и зеро. Ставишь рубль на красное: выигрываешь рубль с вероятностью 18/37, проигрываешь — с вероятностью 19/37.</p>
+    <p class="big">M(X) = 18/37 − 19/37 = −1/37 ≈ −0,027</p>
+    <p>С каждого поставленного рубля казино в среднем забирает 2,7 копейки. Одна ставка — лотерея, миллион ставок — гарантированный доход. Это и есть математическое ожидание.</p>`},
+  tv8:{eye:'Фрэнсис Гальтон, 1889', title:'Доска, на которой шарики рисуют колокол',
+    html:`<p>Гальтон сделал доску со штырьками. На каждом штырьке шарик отскакивает влево или вправо с вероятностью ½. Путь каждого шарика непредсказуем, но внизу они выстраиваются в один и тот же колокол.</p>
+    <p class="big">Хаос в каждом шарике, порядок в куче</p>
+    <p>Этот колокол — нормальный закон. Он возникает везде, где много мелких независимых причин складываются вместе: рост людей, ошибки измерений, баллы за экзамен. Доска Гальтона работает на обложке этой книги.</p>`},
+  tv9:{eye:'Бюффон и Карл Пирсон', title:'Сколько раз нужно бросить монету?',
+    html:`<p>Бюффон бросил монету 4040 раз, и герб выпал 2048 раз. Карл Пирсон бросил 24 000 раз и получил 12 012 гербов.</p>
+    <p class="big">0,5069 → 0,5005</p>
+    <p>Чем больше бросков, тем ближе частота к ½: это закон больших чисел. Но он говорит только о долях. Он не обещает, что гербы и решки когда-нибудь «уравняются». Монета не помнит прошлых бросков.</p>`},
+  tv10:{eye:'Пивоварня Guinness, 1908', title:'Статистик под псевдонимом Стьюдент',
+    html:`<p>Уильям Госсет работал на пивоварне Guinness и проверял качество ячменя по нескольким образцам. Формулы, рассчитанные на большие выборки, на малых давали слишком узкие интервалы.</p>
+    <p>Госсет вывел новое распределение, а опубликовал его под псевдонимом <b>Student</b>: пивоварня не разрешала сотрудникам печататься под своим именем.</p>
+    <p class="big">t-распределение Стьюдента</p>
+    <p>Теперь его используют, когда σ неизвестна, а выборка мала. Оно ждёт тебя в конце этой главы.</p>`},
+  tv11:{eye:'Рональд Фишер, 1936', title:'Слишком хорошо, чтобы быть правдой',
+    html:`<p>Фишер проверил по χ² знаменитые опыты Грегора Менделя с горохом и пришёл к неожиданному выводу: данные согласуются с теорией <b>слишком</b> хорошо. Случайно получить такое совпадение почти невозможно.</p>
+    <p class="big">χ² подозрительно мал</p>
+    <p>Споры, подправлял ли кто-то результаты, идут до сих пор. Критерий ловит не только расхождения, но и подозрительную идеальность.</p>`}
+};
+for (const L of BOOKS.tv.lessons) L.hook = HOOK[L.id];
+
+/* Обложка: доска Гальтона */
+BOOKS.tv.cover = el => {
+  const R = 12, PEAK = U.C(R, R/2)/Math.pow(2, R);
+  let N = 500, dropped = 0, frame = 0, balls = [], bins = new Array(R+1).fill(0), running = false;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const cv = U.canvas(el, w => w<420 ? .9 : .62);
+  const info = h('p',{class:'cap'});
+  const more = U.btn('Ещё 500 шариков', ()=>{ N += 500; if (reduce) fill(); else start(); });
+  el.append(h('div',{class:'row',style:'justify-content:space-between'}, info, more));
+  const fill = () => { while (dropped < N){ let k = 0; for (let r=0;r<R;r++) k += Math.random()<.5 ? 1 : 0; bins[k]++; dropped++; } draw(); };
+  function draw(){
+    const {g,W,H} = cv.fit(), c = U.col();
+    const gap = Math.min((W-20)/(R+2), 30), vg = H*.5/R, cx = W/2, top = 10, by = top + R*vg + 10, bh = H - by - 18;
+    const landed = bins.reduce((a,b)=>a+b,0), mx = Math.max(...bins, landed*PEAK, 8);
+    // столбики
+    for (let k=0;k<=R;k++){ const x = cx + (k - R/2)*gap, hh = bins[k]/mx*bh;
+      g.fillStyle = U.hatch(g,c.pen,5); g.fillRect(x-gap*.42, by+bh-hh, gap*.84, hh); g.strokeStyle = c.ink; g.lineWidth = 1; g.strokeRect(x-gap*.42, by+bh-hh, gap*.84, hh); }
+    g.strokeStyle = c.ink; g.lineWidth = 1.4; g.beginPath(); g.moveTo(cx-(R/2+.8)*gap, by+bh); g.lineTo(cx+(R/2+.8)*gap, by+bh); g.stroke();
+    // теоретический колокол
+    if (landed > 30){ g.save(); g.strokeStyle = c.stamp; g.lineWidth = 2; g.setLineDash([6,4]); g.beginPath();
+      for (let i=0;i<=120;i++){ const k = -0.6 + i/120*(R+1.2), y = by+bh - landed*U.phi((k-R/2)/Math.sqrt(R/4))/Math.sqrt(R/4)/mx*bh; const x = cx + (k-R/2)*gap; i?g.lineTo(x,y):g.moveTo(x,y); }
+      g.stroke(); g.restore(); }
+    // штырьки
+    g.fillStyle = c.ink;
+    for (let r=0;r<R;r++) for (let j=0;j<=r;j++){ g.beginPath(); g.arc(cx+(j-r/2)*gap, top+r*vg+vg*.75, 2.2, 0, 7); g.fill(); }
+    // шарики
+    g.save(); g.shadowColor = c.glow; g.shadowBlur = 8; g.fillStyle = c.glow;
+    for (const b of balls){ const xa = cx+(b.k-b.r/2)*gap, xb = cx+(b.k+b.n-(b.r+1)/2)*gap;
+      const x = xa+(xb-xa)*b.t, y = top + (b.r+b.t)*vg + vg*.35 - Math.sin(b.t*Math.PI)*vg*.35; g.beginPath(); g.arc(x,y,3.4,0,7); g.fill(); }
+    g.restore();
+    info.textContent = `Шариков: ${landed}. Каждый отскакивает влево или вправо с вероятностью ½ — пунктир показывает нормальный закон.`;
+  }
+  function step(){
+    if (!el.isConnected){ running = false; return; }
+    frame++;
+    if (dropped < N && frame % 2 === 0){ balls.push({r:0,k:0,t:0,n:Math.random()<.5?0:1}); dropped++; }
+    for (const b of balls){ b.t += .2; if (b.t >= 1){ b.k += b.n; b.r++; b.t = 0; b.n = Math.random()<.5?0:1; if (b.r >= R){ bins[b.k]++; b.done = true; } } }
+    balls = balls.filter(b=>!b.done);
+    draw();
+    if (balls.length || dropped < N) requestAnimationFrame(step); else running = false;
+  }
+  function start(){ if (!running){ running = true; requestAnimationFrame(step); } }
+  if (reduce) fill(); else start();
+  return draw;
+};
 })();
 
 </script>
@@ -1916,6 +2052,79 @@ const MORE = {
     P('Лаб. 4','Какое значение вернёт BIOS в AX, если функция VESA 4F02h успешно установила режим? (hex)', hexEq(0x4F), '004Fh', 'AL = 4Fh — функция поддерживается, AH = 00h — успешно.')]
 };
 for (const L of BOOKS.vms.lessons) L.more = MORE[L.id];
+
+/* Истории, с которых начинается каждая глава */
+const HOOK = {
+  vms1:{eye:'Проверь прямо сейчас', title:'Почему 0,1 + 0,2 ≠ 0,3',
+    html:`<p>Твой браузер только что сложил два числа:</p><p class="big">0.1 + 0.2 = ${0.1+0.2}</p>
+    <p>Это не ошибка JavaScript, так считает почти любой язык. В двоичной системе 0,1 — бесконечная дробь 0,000110011001100…₂, и компьютер хранит её с округлением. Перевод дробной части умножением на 2 из этой главы показывает, откуда берётся бесконечный хвост.</p>`},
+  vms2:{eye:'Шестнадцатеричная вокруг тебя', title:'Цвет #FF8800 — это три байта',
+    html:`<p><span class="swatch" style="background:#FF8800"></span>Каждый цвет на сайтах записан в шестнадцатеричной системе: FF = 255 красного, 88 = 136 зелёного, 00 синего. Две hex-цифры — ровно один байт, две тетрады.</p>
+    <p class="big">#FF8800 = 255, 136, 0</p>
+    <p>А часы реального времени на материнской плате ПК (CMOS) по умолчанию хранят время в двоично-десятичном коде: 23 часа лежат там как 0010 0011.</p>`},
+  vms3:{eye:'Pac-Man, уровень 256', title:'Игру сломал один переполненный байт',
+    html:`<p>В Pac-Man (1980) номер уровня хранится в одном байте. На 256-м уровне счётчик переполняется, и правая половина экрана превращается в мешанину символов. Пройти этот уровень невозможно.</p>
+    <p>В 2015 году американская авиаслужба FAA предупредила, что генераторы Boeing 787 могут отключиться после 248 дней непрерывной работы: 32-битный знаковый счётчик сотых долей секунды переполняется.</p>
+    <p class="big">2³¹ / 100 / 86 400 ≈ 248,6 дня</p><p>Дополнительный код и флаг OF из этой главы — ровно про это.</p>`},
+  vms4:{eye:'Откуда взялось «C:»', title:'Куда делись диски A: и B:?',
+    html:`<p>Первые IBM PC загружались с дискет, и буквы A: и B: достались двум дисководам. Жёсткий диск появился позже и получил первую свободную букву.</p>
+    <p class="big">C: — третья буква по наследству</p>
+    <p>Так осталось и в Windows. Имена 8.3 тоже живы: короткое имя папки Program Files выглядит как <code>PROGRA~1</code>, и Windows до сих пор создаёт такие имена для старых программ.</p>`},
+  vms5:{eye:'AUTOEXEC.BAT', title:'Пакетный файл, который запускался при каждом включении',
+    html:`<p>При загрузке DOS сама выполняла файл AUTOEXEC.BAT. В него прописывали драйвер мыши, пути к программам и стартовое меню: «1 — Norton Commander, 2 — игры, 3 — выход».</p>
+    <p class="big">CHOICE + IF ERRORLEVEL = меню 90-х</p>
+    <p>Меню из лабы 1 — ровно такое же. Если перепутать порядок проверок ERRORLEVEL, любая клавиша запустит первый пункт. Это видно на рисунке справа.</p>`},
+  vms6:{eye:'Наследство CP/M', title:'Почему COM-программа начинается с 100h',
+    html:`<p>Формат COM достался DOS от CP/M — операционной системы 1970-х. В CP/M программы загружались с адреса 0100h, а первые 256 байт занимала служебная область.</p>
+    <p class="big">ORG 100h — привет из 1974 года</p>
+    <p>DOS сохранила этот порядок, чтобы старые программы было проще переносить. Так появились PSP и строчка ORG 100h в твоей лабе 2.</p>`},
+  vms7:{eye:'640 КБ и линия A20', title:'Адрес, который выходит за мегабайт',
+    html:`<p>Сегмент:смещение даёт 20-битный адрес, то есть 1 МБ памяти. Но посчитай самый большой адрес:</p>
+    <p class="big">FFFF:FFFF = FFFF0h + FFFFh = 10FFEFh</p>
+    <p>Это на 65 520 байт дальше мегабайта. На 8086 такой адрес «заворачивался» в начало памяти, и некоторые программы на это рассчитывали. Поэтому в IBM AT добавили переключатель 21-й адресной линии — знаменитый A20 gate. А программам из всего мегабайта доставались 640 КБ: выше лежали видеопамять (A000h, B800h) и BIOS.</p>`},
+  vms8:{eye:'ASCII, 1963', title:'Таблица, в которой продуман каждый бит',
+    html:`<p>Цифры в ASCII начинаются с 30h, поэтому младшая тетрада кода — это сама цифра: «7» = 37h. Отсюда трюк <code>sub al,'0'</code> из лабы 3.</p>
+    <p class="big">'A' = 41h, 'a' = 61h</p>
+    <p>Заглавная и строчная буквы отличаются одним битом (20h). Регистр меняется одной командой <code>xor al,20h</code>. Таблицу проектировали так, чтобы процессору было удобно.</p>`},
+  vms9:{eye:'Текстовый режим', title:'Как в 80×25 рисовали целые интерфейсы',
+    html:`<p>Norton Commander, Turbo Pascal и сотни программ DOS рисовали окна, рамки и тени одними символами псевдографики и атрибутами цвета. Весь экран — 4000 байт по адресу B800:0000.</p>
+    <p class="big">80 × 25 × 2 = 4000 байт</p>
+    <p>Программы писали в эту память напрямую, в обход BIOS: так было в разы быстрее. А бит мигания можно переключить в «яркий фон» функцией INT 10h, AX = 1003h и получить 16 цветов фона.</p>`},
+  vms10:{eye:'Режим 13h', title:'Почему игры 90-х любили 320×200',
+    html:`<p>320 × 200 точек по одному байту — это 64 000 байт. Кадр целиком помещается в один сегмент A000h, и банки переключать не нужно. Адрес точки считается одной формулой.</p>
+    <p class="big">адрес = y · 320 + x</p>
+    <p>Поэтому множество игр начала 90-х работали в режиме 13h или его вариантах. А пиксели там не квадратные: на мониторе 4:3 каждая точка в 1,2 раза выше, чем шире.</p>`}
+};
+for (const L of BOOKS.vms.lessons) L.hook = HOOK[L.id];
+
+/* Обложка: экран DOSBox, на котором собирается программа из лабы 2 */
+BOOKS.vms.cover = el => {
+  const S = [
+    ['Z:\\>','mount c c:\\tasm'], ['','Drive C is mounted as local directory c:\\tasm\\\n'],
+    ['Z:\\>','c:'],
+    ['C:\\>','tasm privet'], ['','Turbo Assembler  Version 4.1  Copyright (c) 1988, 1996 Borland International\n\nAssembling file:   privet.ASM\nError messages:    None\nWarning messages:  None\nPasses:            1\n'],
+    ['C:\\>','tlink privet'], ['','Turbo Link  Version 7.1.30.1. Copyright (c) 1987, 1996 Borland International\n'],
+    ['C:\\>','privet'], ['','Privet\n']];
+  const full = S.map(([p,t]) => p ? p+t+'\n' : t).join('') + 'C:\\>';
+  const pre = h('pre',{class:'crt','aria-label':'Экран DOSBox: сборка и запуск программы из лабы 2'});
+  pre.style.minHeight = (full.split('\n').length + .5)*1.45 + 'em';
+  el.append(pre, h('p',{class:'cap'},'Так выглядит лаба 2 в DOSBox: монтирование, tasm, tlink, запуск.'));
+  const cursor = '<span class="cur">&nbsp;</span>';
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches){ pre.innerHTML = esc(full) + cursor; return null; }
+  let shown = '', i = 0, j = -1;
+  const tick = () => {
+    if (!el.isConnected) return;
+    if (i >= S.length){ pre.innerHTML = esc(shown + 'C:\\>') + cursor; return; }
+    const [p, t] = S[i];
+    if (!p){ shown += t; i++; pre.innerHTML = esc(shown) + cursor; return setTimeout(tick, 380); }
+    if (j < 0){ shown += p; j = 0; pre.innerHTML = esc(shown) + cursor; return setTimeout(tick, 500); }
+    if (j < t.length){ shown += t[j++]; pre.innerHTML = esc(shown) + cursor; return setTimeout(tick, 55 + Math.random()*70); }
+    shown += '\n'; i++; j = -1; pre.innerHTML = esc(shown) + cursor; setTimeout(tick, 260);
+  };
+  setTimeout(tick, 400);
+  return null;
+};
 })();
 
 </script>
@@ -1927,9 +2136,12 @@ const KEY = 'bit-i-sluchai-v1';
 let S = {book:'tv', i:0, done:{}, pred:{}, solved:{}, exam:'2026-12-25'};
 try { Object.assign(S, JSON.parse(localStorage.getItem(KEY)||'{}')); } catch(e){}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch(e){} };
+// в сборке может быть одна книга или обе
+const KEYS = Object.keys(BOOKS).filter(k => BOOKS[k].lessons.length);
 const m = /^#(tv|vms)-(\d+)$/.exec(location.hash);
-if (m){ S.book = m[1]; S.i = Math.min(+m[2], BOOKS[m[1]].lessons.length); }
-if (!BOOKS[S.book]) S.book='tv';
+if (m && KEYS.includes(m[1])){ S.book = m[1]; S.i = +m[2]; }
+if (!KEYS.includes(S.book)){ S.book = KEYS[0]; S.i = 0; }
+S.i = Math.min(S.i, BOOKS[S.book].lessons.length);
 
 const pL = document.getElementById('pL'), pR = document.getElementById('pR'), leaf = document.getElementById('leaf');
 let draw = null, ro = null;
@@ -1944,24 +2156,56 @@ const stampSVG = (n, fresh) => {
     <text x="50" y="60" text-anchor="middle" font-family="Alegreya, serif" font-weight="800" font-size="30" fill="currentColor">${n}</text></svg>`;
 };
 const doneCount = k => BOOKS[k].lessons.filter(L => S.done[L.id]).length;
-const updCounts = () => { for (const k of ['tv','vms']) document.getElementById('cnt-'+k).textContent = `${doneCount(k)}/${BOOKS[k].lessons.length}`; };
+const updCounts = () => { for (const k of KEYS){ const e = document.getElementById('cnt-'+k); if (e) e.textContent = `${doneCount(k)}/${BOOKS[k].lessons.length}`; } updRank(); };
+
+/* опыт и ранги: всё считается из сохранённого прогресса */
+const XP_STAMP = 30, XP_TASK = 10, XP_PRED = 5;
+const xpOf = k => BOOKS[k].lessons.reduce((s,L)=> s + (S.done[L.id]?XP_STAMP:0) + (S.pred[L.id]===L.predict.a?XP_PRED:0) + solvedCount(L)*XP_TASK, 0);
+const xpMax = k => BOOKS[k].lessons.reduce((s,L)=> s + XP_STAMP + XP_PRED + (L.more||[]).length*XP_TASK, 0);
+const STEPS = [0, .12, .3, .55, .8];
+const rankOf = k => { const x = xpOf(k), mx = xpMax(k); let i = 0; STEPS.forEach((t,j)=>{ if (x >= t*mx) i = j; });
+  return {i, name:BOOKS[k].ranks[i], next:BOOKS[k].ranks[i+1], need: i<4 ? Math.ceil(STEPS[i+1]*mx) - x : 0, x, mx}; };
+function updRank(){
+  const r = rankOf(S.book);
+  document.getElementById('rank').innerHTML = `<span class="rk-l">Ранг</span> <b>${r.name}</b>
+    <span class="rk-bar" role="img" aria-label="${r.x} из ${r.mx} очков опыта"><i style="width:${Math.round(r.x/r.mx*100)}%"></i></span>
+    <span class="rk-xp">${r.x} XP${r.next ? ` · до «${r.next}» ${r.need}` : ''}</span>`;
+}
+const toasts = document.getElementById('toasts');
+function toast(html, kind){
+  const t = h('div',{class:'toast '+(kind||''), html}); toasts.append(t);
+  setTimeout(()=>t.classList.add('out'), kind==='rankup' ? 4200 : 2600); setTimeout(()=>t.remove(), kind==='rankup' ? 4700 : 3100);
+}
+// оборачивает изменение прогресса: показывает полученный опыт и новый ранг
+function gain(why, mutate){
+  const k = S.book, x0 = xpOf(k), r0 = rankOf(k).i;
+  mutate(); save();
+  const d = xpOf(k) - x0, r = rankOf(k);
+  if (d > 0) toast(`<b>+${d} XP</b> ${why}`);
+  if (r.i > r0) toast(`<span class="tk">Новый ранг</span><b>${r.name}</b>`, 'rankup');
+  updCounts();
+}
 
 function renderCover(B){
   draw = null;
   const steps = ['Прочитай теорию и формулу на левой странице.','Предскажи ответ — отметь вариант, пока не проверил.','Проверь на рисунке в тетради: двигай ползунки, бросай кости, щёлкай биты.','Подними клапан — там разбор и решение из учебника.','Реши задачу на штамп. Верный ответ — фиолетовая печать «зачтено».'];
+  const art = h('div',{class:'cover-art'});
   pL.replaceChildren(
-    h('div',{class:'runhead'}, h('span',{},'Книга '+(B.key==='tv'?'первая':'вторая')), h('span',{},'подготовка к сессии')),
+    h('div',{class:'runhead'}, h('span',{}, KEYS.length>1 ? 'Книга '+(B.key==='tv'?'первая':'вторая') : 'Интерактивный учебник'), h('span',{},'подготовка к сессии')),
     h('div',{class:'cover'},
       h('h1',{}, B.name),
       h('p',{class:'sub'}, B.sub),
+      B.cover ? art : null,
       h('p',{class:'theory'}, B.src+'.'),
       h('h3',{},'Как работать с книгой'),
-      h('ol',{class:'steps'}, steps.map(s=>h('li',{},s)))
+      h('ol',{class:'steps'}, steps.map(s=>h('li',{},s))),
+      h('p',{class:'theory'}, `За штамп главы — ${XP_STAMP} XP, за каждую дополнительную задачу — ${XP_TASK}, за верное предсказание — ${XP_PRED}. Опыт поднимает ранг: «${B.ranks.join('» → «')}».`)
     ),
     h('div',{class:'folio'},'i')
   );
+  if (B.cover) draw = B.cover(art) || null;
   const days = Math.ceil((new Date(S.exam+'T09:00') - new Date())/864e5);
-  const left = BOOKS.tv.lessons.length + BOOKS.vms.lessons.length - doneCount('tv') - doneCount('vms');
+  const left = KEYS.reduce((s,k)=> s + BOOKS[k].lessons.length - doneCount(k), 0);
   const weeks = Math.max(1, days/7);
   const dateIn = h('input',{type:'date',class:'txt',id:'examDate',value:S.exam});
   dateIn.addEventListener('change', () => { if (dateIn.value){ S.exam = dateIn.value; save(); renderCover(B); } });
@@ -1972,7 +2216,7 @@ function renderCover(B){
     h('div',{class:'exam'},
       h('div',{class:'lbl'},'До экзамена'),
       h('div',{class:'big'}, days>0 ? `${days} ${plural(days,'день','дня','дней')}` : 'сегодня или уже прошёл'),
-      h('div',{}, days>0 ? `Осталось глав без штампа: ${left} в обеих книгах. Это примерно ${Math.ceil(left/weeks)} ${plural(Math.ceil(left/weeks),'глава','главы','глав')} в неделю, если оставить последнюю неделю на тренажёр.` : ''),
+      h('div',{}, days>0 ? `Осталось глав без штампа: ${left}${KEYS.length>1?' в обеих книгах':''}. Это примерно ${Math.ceil(left/weeks)} ${plural(Math.ceil(left/weeks),'глава','главы','глав')} в неделю, если оставить последнюю неделю на тренажёр.` : ''),
       h('label',{for:'examDate'},'Дата экзамена:', dateIn),
       h('div',{class:'row'}, U.btn('Начать с главы 1', ()=>go(B.key,1,1),'pri'), U.btn('Тренажёр: 10 вопросов', openQuiz))
     ),
@@ -1995,7 +2239,7 @@ function renderLesson(B, i){
   };
   L.predict.opts.forEach((o,j)=>{
     const r = h('input',{type:'radio',name:'pr-'+L.id,id:`pr-${L.id}-${j}`,checked:pred===j});
-    r.addEventListener('change', ()=>{ S.pred[L.id]=j; save(); mark(); openFlap(true); });
+    r.addEventListener('change', ()=>{ gain('за верное предсказание', ()=>{ S.pred[L.id]=j; }); mark(); openFlap(true); });
     opts.append(h('label',{class:'opt',for:`pr-${L.id}-${j}`}, r, h('span',{html:o})));
   });
   const openFlap = (force) => {
@@ -2015,6 +2259,7 @@ function renderLesson(B, i){
   pL.replaceChildren(
     h('div',{class:'runhead'}, h('span',{}, `${B.name} · глава ${i}`), h('span',{}, L.src)),
     h('h2',{}, h('span',{class:'no'}, i+'.'), L.title),
+    L.hook ? h('aside',{class:'hook'}, h('div',{class:'hk-eye'}, L.hook.eye), h('h3',{}, L.hook.title), h('div',{html:L.hook.html})) : null,
     h('div',{class:'theory',html:L.theory}),
     h('div',{class:'predict'}, h('div',{class:'lbl'},'Предскажи'), h('p',{html:L.predict.q}), opts),
     flapBtn, flapBody,
@@ -2034,7 +2279,7 @@ function renderLesson(B, i){
     if (!input.value.trim()){ fb.className='fb no'; fb.textContent='Впиши ответ в поле.'; return; }
     if (L.ch.check(input.value)){
       fb.className='fb ok'; fb.textContent = 'Верно! Ответ: '+L.ch.ans+'.';
-      if (!S.done[L.id]){ S.done[L.id]=true; save(); slot.innerHTML = stampSVG(i,true); updCounts(); }
+      if (!S.done[L.id]){ gain('и штамп главы '+i, ()=>{ S.done[L.id]=true; }); slot.innerHTML = stampSVG(i,true); }
     } else { fb.className='fb no'; fb.textContent = L.ch.wrong || 'Пока не сходится. Проверь вычисления или открой подсказку.'; }
   });
   pR.replaceChildren(
@@ -2063,7 +2308,7 @@ function renderMore(L){
     f.addEventListener('submit', e => {
       e.preventDefault();
       if (!inp.value.trim()){ fb.className='fb no'; fb.textContent='Впиши ответ в поле.'; return; }
-      if (P.check(inp.value)){ fb.className='fb ok'; fb.innerHTML='Верно! Ответ: '+P.ans+'.'; S.solved[key]=true; save(); num.classList.add('done'); }
+      if (P.check(inp.value)){ fb.className='fb ok'; fb.innerHTML='Верно! Ответ: '+P.ans+'.'; gain('за задачу № '+P.n, ()=>{ S.solved[key]=true; }); num.classList.add('done'); }
       else { fb.className='fb no'; fb.textContent='Пока не сходится. Проверь вычисления или открой подсказку.'; }
     });
     return h('div',{class:'mq'}, h('p',{}, num, ' ', h('span',{html:P.q})), f, fb,
@@ -2074,7 +2319,7 @@ function renderMore(L){
 function render(){
   const B = BOOKS[S.book];
   document.getElementById('book').dataset.book = S.book;
-  for (const k of ['tv','vms']) document.getElementById('sp-'+k).setAttribute('aria-pressed', k===S.book);
+  for (const k of KEYS){ const e = document.getElementById('sp-'+k); if (e) e.setAttribute('aria-pressed', k===S.book); }
   if (S.i===0) renderCover(B); else renderLesson(B, S.i);
   const L = B.lessons[S.i-1];
   document.getElementById('bTitle').innerHTML = S.i ? `<small>${S.i}</small>${L.title}` : `<small>${B.name}</small>Обложка и оглавление`;
@@ -2103,7 +2348,7 @@ function go(book, i, dir){
 const toc = document.getElementById('toc'), tocPanel = document.getElementById('tocPanel');
 function openToc(){
   tocPanel.replaceChildren(U.btn('Закрыть', closeToc, 'close'), h('h3',{style:'margin-top:0'},'Оглавление'),
-    ...['tv','vms'].map(k => h('div',{},
+    ...KEYS.map(k => h('div',{},
       h('h3',{}, BOOKS[k].name+' — '+BOOKS[k].sub),
       h('ul',{class:'toclist'},
         h('li',{}, h('button',{type:'button',onclick:()=>go(k,0,-1)}, h('span',{class:'n'},'·'), h('span',{},'Обложка, план, тренажёр'), h('span',{}))),
@@ -2117,7 +2362,7 @@ toc.addEventListener('click', e => { if (e.target===toc) closeToc(); });
 const quiz = document.getElementById('quiz'), card = document.getElementById('quizCard');
 let Q = null;
 function openQuiz(){
-  const all = ['tv','vms'].flatMap(k => BOOKS[k].lessons.map((L,i)=>({k,i:i+1,L})));
+  const all = KEYS.flatMap(k => BOOKS[k].lessons.map((L,i)=>({k,i:i+1,L})));
   for (let i=all.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [all[i],all[j]]=[all[j],all[i]]; }
   Q = {items:all.slice(0,10), n:0, score:0};
   quiz.hidden = false; showQ();
@@ -2171,9 +2416,11 @@ document.getElementById('bMenu').onclick = openToc;
 document.getElementById('bQuiz').onclick = openQuiz;
 document.getElementById('bPrev').onclick = () => go(S.book, S.i-1, -1);
 document.getElementById('bNext').onclick = () => go(S.book, S.i+1, 1);
-document.querySelectorAll('.spine').forEach(b => b.onclick = () => go(b.dataset.k, 0, b.dataset.k==='vms'?1:-1));
+if (KEYS.length > 1) document.getElementById('spines').append(...KEYS.map(k =>
+  h('button',{class:'spine',id:'sp-'+k,type:'button','aria-pressed':'false',onclick:()=>go(k,0,k==='vms'?1:-1)}, BOOKS[k].name.toUpperCase()+' ', h('small',{id:'cnt-'+k}))));
+else { const B = BOOKS[KEYS[0]]; document.getElementById('brand').innerHTML = `${B.name} <i>· ${B.sub.toLowerCase()}</i>`; }
 
-addEventListener('hashchange', () => { const m = /^#(tv|vms)-(\d+)$/.exec(location.hash); if (m) go(m[1], Math.min(+m[2], BOOKS[m[1]].lessons.length), 1); });
+addEventListener('hashchange', () => { const m = /^#(tv|vms)-(\d+)$/.exec(location.hash); if (m && KEYS.includes(m[1])) go(m[1], Math.min(+m[2], BOOKS[m[1]].lessons.length), 1); });
 let raf = 0;
 new ResizeObserver(()=>{ cancelAnimationFrame(raf); raf = requestAnimationFrame(()=>draw && draw()); }).observe(pR);
 document.fonts && document.fonts.ready.then(()=>draw && draw());
